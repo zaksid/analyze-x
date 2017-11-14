@@ -223,6 +223,8 @@ def qwerty():
 
     # firstFrame = None
 
+    Count = 0
+
     while True:
         ret, frame = cap.read()
         # frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
@@ -251,8 +253,26 @@ def qwerty():
         # draw_lanes(frame, LANES, COLORS)
 
         # Draw lanes' contours
-        for cnt in LANES:
-            cv2.drawContours(frame, [LANES[cnt]], -1, (0, 255, 255), 2)
+        # for cnt in LANES:
+        #     cv2.drawContours(frame, [LANES[cnt]], -1, (0, 255, 255), 2)
+
+        text = "Crossed: {0:3d}".format(Count)
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        cv2.putText(
+            frame,
+            text,  # text to write
+            (10, 50),  # bottom-left corner where data starts
+            font,
+            1,  # font scale
+            (0, 0, 255),
+            2  # thickness
+        )
+        cv2.line(
+            frame,  # image where you want to draw the shapes
+            (478, 286),  # start point
+            (563, 263),  # end point
+            (255, 0, 0),
+            1)
 
         cv2.namedWindow(WINDOW_NAME, cv2.WINDOW_NORMAL)
 
