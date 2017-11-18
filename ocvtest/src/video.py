@@ -1,7 +1,7 @@
 import cv2 as cv
 
-VIDEO_FILE = '../videos/camera_1.mp4'
-VIDEO_SPEED = 60
+VIDEO_FILE = '../videos/video.mp4'
+VIDEO_SPEED = 15
 
 cap = cv.VideoCapture(VIDEO_FILE)
 
