@@ -1,9 +1,6 @@
 import cv2
 import numpy as np
 
-VIDEO_FILE = '../videos/highway.mp4'
-VIDEO_SPEED = 30
-
 COLOR_AMBER = (255, 193, 7)
 COLOR_AQUA = (117, 255, 234)
 COLOR_BLUE = (255, 0, 0)
@@ -21,85 +18,134 @@ COLOR_RED = (0, 0, 255)
 COLOR_VIOLET = (212, 52, 239)
 COLOR_YELLOW = (0, 255, 255)
 
-Lanes = {
+IMG_B = '../images/Screenshot_bus.png'
+IMG1 = '../images/Screenshot_1.png'
+VIDEO_FILE = '../videos/highway.mp4'
+VIDEO_SPEED = 30
+
+LANES = {
     '1': {'x1': 260, 'y1': 412, 'x2': 433, 'y2': 412, 'color': COLOR_RED},
     '2': {'x1': 434, 'y1': 412, 'x2': 618, 'y2': 412, 'color': COLOR_BLUE},
     '3': {'x1': 619, 'y1': 412, 'x2': 800, 'y2': 412, 'color': COLOR_PINK},
     '4': {'x1': 801, 'y1': 412, 'x2': 985, 'y2': 412, 'color': COLOR_GREEN}
 }
 
-Counts = {
+COUNTS = {
     '1': 0,
     '2': 0,
     '3': 0,
     '4': 0
 }
 
-gaussian_kernel = (5, 5)
-kernel_3x3 = np.ones((3, 3), np.uint8)
-kernel_5x5 = np.ones((5, 5), np.uint8)
+GAUSSIAN_KERNEL = (5, 5)
+KERNEL_3x3 = np.ones((3, 3), np.uint8)
+KERNEL_5x5 = np.ones((5, 5), np.uint8)
 thresh = 50
 
-cap = cv2.VideoCapture(VIDEO_FILE)
 
-fgbg = cv2.createBackgroundSubtractorMOG2()
-
-while cap.isOpened():
-    ret, frame = cap.read()
-
-    fgmask = fgbg.apply(frame)
-
-    blured = cv2.GaussianBlur(fgmask, gaussian_kernel, 0)
-    closed = cv2.morphologyEx(blured, cv2.MORPH_CLOSE, kernel_3x3, iterations=3)
-    opened = cv2.morphologyEx(closed, cv2.MORPH_OPEN, kernel_3x3, iterations=3)
+def process_frame(frame):
+    blured = cv2.GaussianBlur(frame, GAUSSIAN_KERNEL, 0)
+    closed = cv2.morphologyEx(blured, cv2.MORPH_CLOSE, KERNEL_3x3, iterations=5)
+    opened = cv2.morphologyEx(closed, cv2.MORPH_OPEN, KERNEL_3x3, iterations=1)
     ret, threshold = cv2.threshold(opened, thresh, 255, cv2.THRESH_BINARY)
-    eroded = cv2.erode(threshold, kernel_5x5, iterations=3)
-    dilated = cv2.dilate(eroded, kernel_5x5, iterations=3)
+    # eroded = cv2.erode(threshold, KERNEL_5x5, iterations=3)
+    dilated = cv2.dilate(threshold, KERNEL_5x5, iterations=5)
 
-    result = dilated
+    result = threshold
 
-    (_, contours, hierarchy) = cv2.findContours(result.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    return result
 
-    # cv2.drawContours(frame, contours, -1, COLOR_AMBER, 2)
-    # gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
 
-    # Draw lanes
-    for i in Lanes:
-        x1 = Lanes[i]['x1']
-        y1 = Lanes[i]['y1']
-        x2 = Lanes[i]['x2']
-        y2 = Lanes[i]['y2']
-        color = Lanes[i]['color']
+def main():
+    cap = cv2.VideoCapture(VIDEO_FILE)
 
-        cv2.line(frame, (x1, y1), (x2, y2), color, 2)
-        cv2.putText(frame, 'COUNT %r: %r' % (i, Counts[i]), (x1, y1 - 20), cv2.FONT_HERSHEY_SIMPLEX, 0.8, color, 2)
+    fgbg = cv2.createBackgroundSubtractorMOG2(detectShadows=True)
 
-    for contour in contours:
-        if cv2.contourArea(contour) < 250:
-            continue
+    while cap.isOpened():
+        ret, frame = cap.read()
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-        x, y, w, h = cv2.boundingRect(contour)
-        center = x + w / 2
-        cv2.rectangle(frame, (x, y), (x + w, y + h), COLOR_AMBER, 2)
-        cv2.putText(frame, 'O', (center, y), cv2.FONT_HERSHEY_SIMPLEX, 0.4, COLOR_RED, 5)
+        fgmask = fgbg.apply(frame)
 
-        # Count vehicles on each lane
-        for i in Lanes:
-            x1 = Lanes[i]['x1']
-            y1 = Lanes[i]['y1']
-            x2 = Lanes[i]['x2']
-            y2 = Lanes[i]['y2']
-            color = Lanes[i]['color']
+        result = process_frame(fgmask)
 
-            if y1 < y < (y1 + 15) and x1 < center < x2:
-                Counts[i] += 1
+        (_, contours, hierarchy) = cv2.findContours(result.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
-    # cv2.namedWindow('camera1', cv2.WINDOW_NORMAL)
-    cv2.imshow('camera1', frame)
-    # cv2.imshow('test', result)
-    if cv2.waitKey(VIDEO_SPEED) & 0xFF == 27:
-        break
+        # cv2.drawContours(frame, contours, -1, COLOR_AMBER, 2)
+        # gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
 
-print Counts
-cap.release()
-cv2.destroyAllWindows()
+        # Draw lanes
+        for i in LANES:
+            x1 = LANES[i]['x1']
+            y1 = LANES[i]['y1']
+            x2 = LANES[i]['x2']
+            y2 = LANES[i]['y2']
+            color = LANES[i]['color']
+
+            cv2.line(frame, (x1, y1), (x2, y2), color, 2)
+            cv2.putText(frame, 'COUNT %r: %r' % (i, COUNTS[i]), (x1, y1 - 20), cv2.FONT_HERSHEY_SIMPLEX, 0.8, color, 2)
+
+        for contour in contours:
+            if cv2.contourArea(contour) < 250:
+                continue
+
+            x, y, w, h = cv2.boundingRect(contour)
+            center = x + w / 2
+            cv2.rectangle(frame, (x, y), (x + w, y + h), COLOR_AMBER, 2)
+            cv2.putText(frame, 'O', (center, y), cv2.FONT_HERSHEY_SIMPLEX, 0.4, COLOR_RED, 5)
+
+            # Count vehicles on each lane
+            for i in LANES:
+                x1 = LANES[i]['x1']
+                y1 = LANES[i]['y1']
+                x2 = LANES[i]['x2']
+
+                if y1 < y < (y1 + 15) and x1 < center < x2:
+                    COUNTS[i] += 1
+
+        # cv2.namedWindow('camera1', cv2.WINDOW_NORMAL)
+        cv2.imshow('camera1', frame)
+        cv2.imshow('test', result)
+        if cv2.waitKey(VIDEO_SPEED) & 0xFF == 27:
+            break
+
+    cap.release()
+
+    cv2.destroyAllWindows()
+
+
+def haar(frame):
+    ncars = 0
+    car_cascade = cv2.CascadeClassifier('cars.xml')
+    img = frame
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+    # Detect cars
+    cars = car_cascade.detectMultiScale(gray, 1.1, 1)
+
+    # Draw border
+    for (x, y, w, h) in cars:
+        cv2.rectangle(img, (x, y), (x + w, y + h), (0, 0, 255), 2)
+        ncars = ncars + 1
+
+    return img, ncars
+
+
+def call_haar():
+    cap = cv2.VideoCapture(VIDEO_FILE)
+
+    while cap.isOpened():
+        ret, frame = cap.read()
+        result = haar(frame)
+        cv2.imshow('test', result)
+        if cv2.waitKey(1) & 0xFF == 27:
+            break
+
+    cap.release()
+
+    cv2.destroyAllWindows()
+
+
+if __name__ == "__main__":
+    main()
+    # call_haar()
