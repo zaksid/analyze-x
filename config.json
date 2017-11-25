@@ -4,10 +4,10 @@
   "camera_addr": "rtsp://admin:12345@212.1.110.82:5554/unicast/c3/s0/live",
   "vehicle_sizes": [
     {
-      "small": "5000"
+      "small": 5000
     },
     {
-      "large": "20000"
+      "large": 20000
     }
   ],
   "lanes": {
@@ -16,5 +16,6 @@
     "3": {"x1": 619, "y1": 412, "x2": 800, "y2": 412},
     "4": {"x1": 801, "y1": 412, "x2": 985, "y2": 412}
   },
-  "save_format": "json"
+  "save_format": "json",
+  "stat_file_name": "../output/STAT.json"
 }

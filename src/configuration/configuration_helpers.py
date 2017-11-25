@@ -12,7 +12,7 @@ def load_config(config_file):
     return json.loads(open(config_file, 'r').read())
 
 
-def get_file_name():
+def get_video_file_name():
     """
     Obtain relative path to video file.
     :return: String with file path
@@ -46,6 +46,15 @@ def get_save_format():
     """
     config = load_config(CONFIG_FILE)
     return config['save_format']
+
+
+def get_save_file_name():
+    """
+    Get file name, including full path, of file to which statistics will be saved.
+    :return: File path
+    """
+    config = load_config(CONFIG_FILE)
+    return config['stat_file_name']
 
 
 def get_small_vehicle_size():

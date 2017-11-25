@@ -18,10 +18,9 @@ COLOR_RED = (0, 0, 255)
 COLOR_VIOLET = (212, 52, 239)
 COLOR_YELLOW = (0, 255, 255)
 
-IMG_B = '../images/Screenshot_bus.png'
-IMG1 = '../images/Screenshot_1.png'
+IMG_TEST = '../images/test_img.png'
 VIDEO_FILE = '../videos/highway.mp4'
-VIDEO_SPEED = 30
+VIDEO_SPEED = 90
 
 LANES = {
     '1': {'x1': 260, 'y1': 412, 'x2': 433, 'y2': 412, 'color': COLOR_RED},
@@ -40,18 +39,18 @@ COUNTS = {
 GAUSSIAN_KERNEL = (5, 5)
 KERNEL_3x3 = np.ones((3, 3), np.uint8)
 KERNEL_5x5 = np.ones((5, 5), np.uint8)
-thresh = 50
 
 
 def process_frame(frame):
     blured = cv2.GaussianBlur(frame, GAUSSIAN_KERNEL, 0)
     closed = cv2.morphologyEx(blured, cv2.MORPH_CLOSE, KERNEL_3x3, iterations=5)
     opened = cv2.morphologyEx(closed, cv2.MORPH_OPEN, KERNEL_3x3, iterations=1)
-    ret, threshold = cv2.threshold(opened, thresh, 255, cv2.THRESH_BINARY)
+    ret, threshold_0 = cv2.threshold(opened, 127, 255, cv2.THRESH_TOZERO)
+    ret, threshold = cv2.threshold(threshold_0, 30, 255, cv2.THRESH_BINARY)
     # eroded = cv2.erode(threshold, KERNEL_5x5, iterations=3)
-    dilated = cv2.dilate(threshold, KERNEL_5x5, iterations=5)
+    dilated = cv2.dilate(threshold, KERNEL_5x5, iterations=3)
 
-    result = threshold
+    result = dilated
 
     return result
 
@@ -86,13 +85,15 @@ def main():
             cv2.putText(frame, 'COUNT %r: %r' % (i, COUNTS[i]), (x1, y1 - 20), cv2.FONT_HERSHEY_SIMPLEX, 0.8, color, 2)
 
         for contour in contours:
-            if cv2.contourArea(contour) < 250:
+            if cv2.contourArea(contour) < 2000:
                 continue
 
             x, y, w, h = cv2.boundingRect(contour)
             center = x + w / 2
             cv2.rectangle(frame, (x, y), (x + w, y + h), COLOR_AMBER, 2)
             cv2.putText(frame, 'O', (center, y), cv2.FONT_HERSHEY_SIMPLEX, 0.4, COLOR_RED, 5)
+            cv2.putText(frame, str(cv2.contourArea(contour)), (center, y + 20),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.4, COLOR_BLUE, 2)
 
             # Count vehicles on each lane
             for i in LANES:
@@ -106,6 +107,7 @@ def main():
         # cv2.namedWindow('camera1', cv2.WINDOW_NORMAL)
         cv2.imshow('camera1', frame)
         cv2.imshow('test', result)
+
         if cv2.waitKey(VIDEO_SPEED) & 0xFF == 27:
             break
 
@@ -146,6 +148,20 @@ def call_haar():
     cv2.destroyAllWindows()
 
 
+def test_processing():
+    img = cv2.imread(IMG_TEST)
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    result = process_frame(img)
+
+    cv2.imshow('original', img)
+    cv2.imshow('dilated', result)
+    while True:
+        if cv2.waitKey(1) & 0xFF == 27:
+            cv2.destroyAllWindows()
+            break
+
+
 if __name__ == "__main__":
     main()
     # call_haar()
+    # test_processing()
