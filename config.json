@@ -1,13 +1,13 @@
 {
   "input": "video",
   "video_path": "../data/highway.mp4",
-  "camera_addr": "",
+  "camera_addr": "rtsp://admin:12345@212.1.110.82:5554/unicast/c3/s0/live",
   "vehicle_sizes": [
     {
-      "small": "250"
+      "small": "5000"
     },
     {
-      "big": "375"
+      "large": "20000"
     }
   ],
   "lanes": {
