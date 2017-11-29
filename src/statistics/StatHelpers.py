@@ -81,9 +81,9 @@ class StatHelper:
         :param filename: Path to file to which statistics data will be written
         """
         result = {
-            'small_vehicles_count': self.small_vehicles_count,
-            'large_vehicles_count': self.large_vehicles_count,
-            'all_vehicles_count': self.all_vehicles_count
+            'Count of small vehicles on lines:': self.small_vehicles_count,
+            'Count of large vehicles on lines:': self.large_vehicles_count,
+            'Count of all vehicles on lines:': self.all_vehicles_count
         }
 
         if not os.path.exists(os.path.dirname(filename)):
